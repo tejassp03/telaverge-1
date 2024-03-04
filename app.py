@@ -2,6 +2,7 @@ import streamlit as st
 import json
 from facebook import get_facebook_posts, get_facebook_comments, analyze_sentiment
 from twitter_scraper_selenium import scrape_profile_with_api
+from scraper import GetInstagramProfile
 from textblob import TextBlob
 
 # Function to analyze sentiment of comments
@@ -44,7 +45,7 @@ st.title("Social Media Sentiment Analysis")
 st.write("Select the social media platform and enter the profile name to analyze its content.")
 
 # Sidebar for selecting social media platform
-platform = st.sidebar.radio("Select Platform", ("Facebook", "Twitter"))
+platform = st.sidebar.radio("Select Platform", ("Facebook", "Twitter","Instagram"))
 
 if platform == "Facebook":
     # Input field for the page name
@@ -66,6 +67,30 @@ if platform == "Facebook":
                 # Analyze sentiment of comments
                 negative_comments = analyze_sentiment(all_comments)
 
+                # Display negative comments
+                if negative_comments:
+                    st.header("Negative Comments")
+                    for idx, comment in enumerate(negative_comments, start=1):
+                        st.write(f"{idx}. **Sentiment Score:** {comment['sentiment']:.2f}, **Comment:** {comment['text']}")
+                else:
+                    st.warning("No negative comments found.")
+elif platform == "Instagram":
+    # Input field for the page name
+    page_name = st.text_input("Enter the Instagram page name:")
+
+    # Button to trigger the analysis
+    if st.button("Analyze Instagram Comments"):
+        if not page_name:
+            st.error("Please enter a valid page name.")
+        else:
+            # Show loading state
+            with st.spinner("Loading... This may take up to 1 minute."):
+                # Get post IDs
+                incls = GetInstagramProfile()
+                comm_ids = incls.get_post_comments(page_name)
+                # Analyze sentiment of comments
+                comment_texts = [comment['text'] for comment in comm_ids]
+                negative_comments = analyze_sentiment(comment_texts)
                 # Display negative comments
                 if negative_comments:
                     st.header("Negative Comments")
